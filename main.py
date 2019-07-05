@@ -55,12 +55,13 @@ class NPDA :
             else:
                 self.cfg_print.append("(%s%s%s) -> %s(%s%s%s)(%s%s%s)|%s(%s%s%s)(%s%s%s)" % tuple(i))
         print(self.cfg_print)
-        self.rules(self.cfg_print)
-
         file=open("output.txt","w")
         for i in self.cfg_print:
             file.write(i)
             file.write("\n")
+        file.write("\n")
+        file.close()
+        self.rules(self.cfg_print)
 
     def derive(self, trans_func, transition, rules, input, counter):
         counter1 = 0
@@ -139,9 +140,17 @@ class NPDA :
                                 else:
                                     counter1 += 1
                             except IndexError:
+                                file = open("output.txt" , "a+")
                                 print('Input :' + input)
+                                file.write('Input :' + input)
+                                file.write("\n")
                                 print('Output :')
+                                file.write('Output')
+                                file.write("\n")
                                 print('False')
+                                file.write('False')
+                                file.write("\n")
+                                file.close()
                                 return False
                         else:
                             counter1 += 1
@@ -191,10 +200,18 @@ class NPDA :
 
     def print_derivation(self, rules, input):
         counter = 0
+        file = open("output.txt" , "a+")
         print('Input :' + input)
+        file.write('Input :' + input)
+        file.write("\n")
         print('Output :')
+        file.write('Output :')
+        file.write("\n")
         print('True')
+        file.write('True')
+        file.write("\n")
         print(rules[0][0] + '=>' + rules[0][1], end="")
+        file.write(rules[0][0] + '=>' + rules[0][1])
         d = '('
         rule_split = [d + e for e in rules[0][1].split(d) if len(e) != 1]
         del rules[0]
@@ -215,7 +232,9 @@ class NPDA :
             elif rule[1] == '_' and counter == len(input) - 1:
                 rule_split.pop()
             print('=>' + input[0] + ''.join(rule_split), end="")
-
+            file.write('=>' + input[0] + ''.join(rule_split))
+        file.write("\n")
+        file .close()
     def rules(self, transition):
         rules = []
         while len(transition) > 0:
@@ -226,6 +245,7 @@ class NPDA :
             else:
                 rules.append((transition[0][0:7], string))
             transition.remove(transition[0])
+        self.derivation('(q0$q1)', rules, 'abba')
         self.derivation('(q0$q1)', rules, 'abb')
 
 
