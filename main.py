@@ -54,13 +54,180 @@ class NPDA :
                 self.cfg_print.append("(%s%s%s) -> %s(%s%s%s)(%s%s%s)" % tuple(i))
             else:
                 self.cfg_print.append("(%s%s%s) -> %s(%s%s%s)(%s%s%s)|%s(%s%s%s)(%s%s%s)" % tuple(i))
-        print(len(self.cfg),self.cfg)
         print(self.cfg_print)
+        self.rules(self.cfg_print)
 
         file=open("output.txt","w")
         for i in self.cfg_print:
             file.write(i)
             file.write("\n")
+
+    def derive(self, trans_func, transition, rules, input, counter):
+        counter1 = 0
+        len_rules = len(rules)
+        while counter1 != len(transition):
+            if trans_func[1][1:8] == transition[counter1][0]:
+                if input[counter] == transition[counter1][1][0] or transition[counter1][1][0] == '_':
+                    rules.append(transition[counter1])
+                    counter1 += 1
+                else:
+                    counter1 += 1
+            else:
+                counter1 += 1
+        if len_rules == len(rules):
+            rules.pop()
+            len_rules = len(rules)
+            counter1 = 0
+        else:
+            while len(rules) != len_rules:
+                if len(rules[-1][1]) != 1:
+                    rules.pop()
+            counter1 = 0
+        while counter1 != len(transition):
+            if trans_func[1][8:15] == transition[counter1][0]:
+                if input[counter] == transition[counter1][1][0] or transition[counter1][1][0] == '_':
+                    rules.append(transition[counter1])
+                    counter1 += 1
+                else:
+                    counter1 += 1
+            else:
+                counter1 += 1
+        if len_rules == len(rules):
+            rules.pop()
+            len_rules = len(rules)
+            counter1 = 0
+
+        else:
+            while len(rules) != len_rules:
+                rules.pop()
+            counter1 = 0
+
+    def derivation(self, initial, transition, input):
+        rules = []
+        len_rules = 0
+        string = []
+        counter = 0
+        counter1 = 0
+        initials = []
+        for rule in transition:
+            initials.append(rule[0])
+        for rule in transition:
+            if initial == rule[0]:
+                if input[counter] == rule[1][0] and rule[1][1:8] in initials and rule[1][8:15] in initials:
+                    rules.append(rule)
+                    if input[counter] in string:
+                        continue
+                    else:
+                        string.append(input[counter])
+                else:
+                    continue
+        if len(string) == 0:
+            return False
+        else:
+            counter += 1
+            len_rules = len(rules)
+
+        while counter != len(input) - 1:
+            for rule in rules:
+                if len(rule[1]) != 1:
+                    while counter1 != len(transition):
+                        if rule[1][1:8] == transition[counter1][0]:
+                            try:
+                                if input[counter] == transition[counter1][1][0] and transition[counter1][1][0] != '_':
+                                    rules.append(transition[counter1])
+                                    counter1 += 1
+                                else:
+                                    counter1 += 1
+                            except IndexError:
+                                print('Input :' + input)
+                                print('Output :')
+                                print('False')
+                                return False
+                        else:
+                            counter1 += 1
+                    if len_rules == len(rules):
+                        rules.remove(rule)
+                        len_rules = len(rules)
+                        counter1 = 0
+                        break
+                    else:
+                        counter += 1
+                        counter1 = 0
+                    while counter1 != len(transition):
+                        if rule[1][8:15] == transition[counter1][0]:
+                            if input[counter] == transition[counter1][1][0] and transition[counter1][1][0] != '_':
+                                rules.append(transition[counter1])
+                                if len(transition[counter1][0]) > 1:
+                                    self.derive(transition[counter1], transition, rules, input, counter)
+                                counter1 += 1
+                            else:
+                                counter1 += 1
+                        else:
+                            counter1 += 1
+                    if len_rules == len(rules):
+                        rules.remove(rule)
+                        len_rules = len(rules)
+                        counter1 = 0
+                        break
+                    else:
+                        counter += 1
+                        counter1 = 0
+                    if counter == len(input) - 1:
+                        break
+                    else:
+                        continue
+                else:
+                    continue
+        for rule in transition:
+            if rules[counter - 1][1][1:8] == rule[0]:
+                if len(rule[1]) == 1 or rule[1] == '_':
+                    rules.append(rule)
+        for rule1 in transition:
+            if rules[counter - 1][1][8:15] == rule1[0]:
+                if len(rule1[1]) == 1 or rule1[1] == '_':
+                    rules.append(rule1)
+        print(rules)
+        self.print_derivation(rules, input)
+
+    def print_derivation(self, rules, input):
+        counter = 0
+        print('Input :' + input)
+        print('Output :')
+        print('True')
+        print(rules[0][0] + '=>' + rules[0][1], end="")
+        d = '('
+        rule_split = [d + e for e in rules[0][1].split(d) if len(e) != 1]
+        del rules[0]
+        for rule in rules:
+            rule_split1 = []
+            if rule[0] in rule_split and rule[1] != '_':
+                index = rule_split.index(rule[0])
+                if len(rule[1]) > 1:
+                    rule_split1 = [d + e for e in rule[1].split(d) if len(e) != 1]
+                    rule_split1.insert(0, input[counter])
+                    rule_split.remove(rule[0])
+                    for i in rule_split1:
+                        rule_split.append(i)
+                    counter += 1
+                else:
+                    rule_split[index] = rule[1]
+                    counter += 1
+            elif rule[1] == '_' and counter == len(input) - 1:
+                rule_split.pop()
+            print('=>' + input[0] + ''.join(rule_split), end="")
+
+    def rules(self, transition):
+        rules = []
+        while len(transition) > 0:
+            string = transition[0][11:]
+            if len(string) > 1:
+                rules.append((transition[0][0:7], string[: string.index('|')]))
+                rules.append((transition[0][0:7], string[string.index('|') + 1:]))
+            else:
+                rules.append((transition[0][0:7], string))
+            transition.remove(transition[0])
+        self.derivation('(q0$q1)', rules, 'abb')
+
 
 if __name__ =='__main__':
     file = open("input.txt" , "r")
@@ -96,5 +263,4 @@ if __name__ =='__main__':
     my_states = list(set(my_states))
     q = my_states.index(my_init)
     my_states[0], my_states[q] = my_states[q], my_states[0]
-    print(my_statesNO,my_alph,my_stack_alph,my_stack_pointer,my_finals,my_init,my_states,my_trans)
     NPDA(my_states,my_alph,my_stack_alph,my_stack_pointer,my_init,my_trans,my_statesNO,my_finals)
